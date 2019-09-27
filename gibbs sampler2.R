@@ -17,7 +17,7 @@ psi=0.01
 gamma1=0.1
 
 #starting values
-nclustmax=20
+nclustmax=nloc
 z=sample(1:nclustmax,size=nobs,replace=T)
 theta=matrix(1/nloc,nclustmax,nloc)
 phi=rep(1/nclustmax,nclustmax)
