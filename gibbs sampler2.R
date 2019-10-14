@@ -2,6 +2,8 @@ rm(list=ls(all=TRUE))
 set.seed(1)
 
 library('Rcpp')
+library('MCMCpack')
+
 sourceCpp('aux1.cpp')
 source('gibbs functions.R') #for clustering
 
@@ -81,7 +83,11 @@ plot(store.phi[ngibbs,],type='h')
 plot(store.theta[ngibbs,],type='h')
 plot(store.z[ngibbs,],type='h')
 
-
+#by col or row?
+new.theta=matrix(store.theta[ngibbs,], nclustmax, nloc)
+image(new.theta)
+new.theta=matrix(store.theta[ngibbs,], nclustmax, nloc, byrow = T)
+image(new.theta)
 
 
 
