@@ -3,6 +3,8 @@ set.seed(1)
 
 library('Rcpp')
 library('MCMCpack')
+library(dplyr)
+library(ggplot2)
 library(tidyr) #for gather function
 library(ggnewscale) #for multiple fill scales in ggplot2
 library(pals) # for more color palettes
@@ -10,16 +12,24 @@ library(pals) # for more color palettes
 
 sourceCpp('aux1.cpp')
 source('gibbs functions.R') #for clustering
+source('helper functions.R')
 
 
-### USE BREAKPOINTS AND BEHAV.HEAT (FROM STEP 3 SCRIPT) TO CREATE SEGMENTED DFs/LIST
+dat<- read.csv("Snail Kite Gridded Data.csv", header = T, sep = ",")
+names(dat)[7]<- "dist"  #change to generic form
+behav.list<- behav.prep(dat=dat, tstep = 3600)  #add move params and filter by 3600 s interval
+max.SL=max(dat$SL, na.rm = T)
+max.TA=max(dat$TA, na.rm = T)
+
 
 ## ID 1 ##
+behav.breakpts<- read.csv('ID1 Breakpoints (Behavior).csv', header = T, sep = ',')
+behav.breakpts<- behav.breakpts[,1]
+dat<- assign.behav.seg(behav.breakpts, behav.list$`1`)
+dat<- get.summary.stats_behav(dat,max.SL,max.TA)
 
-dat=read.csv('',header =T, sep = ",")
-dat=data.matrix(dat)
-dat=dat[which(apply(dat,1,sum)>10),]
-n=rowSums(dat)
+### HOW TO CLUSTER USING VALUES ACROSS ALL 3 VARS?
+n=rowSums(dat$res.SL)
 nobs=nrow(dat)
 nloc=ncol(dat)
 lo=0.000000000000001
@@ -29,7 +39,7 @@ psi=0.01
 gamma1=0.1
 
 #starting values
-nclustmax=10
+nclustmax=nobs
 z=sample(1:nclustmax,size=nobs,replace=T)
 theta=matrix(1/nloc,nclustmax,nloc)
 phi=rep(1/nclustmax,nclustmax)
