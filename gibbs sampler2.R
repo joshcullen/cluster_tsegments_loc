@@ -1,48 +1,25 @@
-set.seed(1)
+gibbs.clust.space=function(dat,ngibbs,nburn,nclustmax) {
 
-library('Rcpp')
-library('MCMCpack')
-library(tidyr) #for gather function
-library(ggnewscale) #for multiple fill scales in ggplot2
-library(pals) # for more color palettes
-
-
-sourceCpp('aux1.cpp')
-source('gibbs functions.R') #for clustering
-
-
-## ID 1 ##
-
-dat=read.csv('ID1 Seg x Clust.csv',header =T, sep = ",")
-dat=data.matrix(dat)
-dat=dat[which(apply(dat,1,sum)>10),]
 n=rowSums(dat)
 nobs=nrow(dat)
 nloc=ncol(dat)
 lo=0.000000000000001
-  
-#priors
-psi=0.01
-gamma1=0.1
 
 #starting values
-nclustmax=10
 z=sample(1:nclustmax,size=nobs,replace=T)
 theta=matrix(1/nloc,nclustmax,nloc)
 phi=rep(1/nclustmax,nclustmax)
 
 #store results
-ngibbs=1000
 store.phi=matrix(NA,ngibbs,nclustmax)
 store.z=matrix(NA,ngibbs,nobs)
 store.theta=matrix(NA,ngibbs,nclustmax*nloc)
 store.loglikel=matrix(NA,ngibbs,1)
 
 #gibbs sampler
-nburn=ngibbs/2
 for (i in 1:ngibbs){
-  print(i)
-
+  pb$tick()  #create progress bar
+  
   #occasionally re-order this
   if (i<nburn & i%%50==0){
     ind=order(phi,decreasing=T)
@@ -76,8 +53,9 @@ for (i in 1:ngibbs){
   store.theta[i,]=theta
   store.phi[i,]=phi
   store.z[i,]=z
+  }
+list(loglikel=store.loglikel, theta=store.theta, phi=store.phi, z=store.z)
 }
-
 
 
 plot(store.loglikel,type='l')

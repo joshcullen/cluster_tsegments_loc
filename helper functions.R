@@ -1,9 +1,4 @@
-get.summary.stats_obs=function(dat){  #dat must have time.seg assigned; for all IDs
-  
-  #change values of grid cells for easy manipulation
-  dat$grid.cell<- as.factor(dat$grid.cell)
-  levels(dat$grid.cell)<- 1:length(levels(dat$grid.cell))
-  dat$grid.cell<- as.numeric(dat$grid.cell)
+get.summary.stats_ac=function(dat){  #dat must have time.seg assigned; for all IDs
   
   #create list of input and to store output
   dat.list<- df.to.list(dat = dat)
@@ -13,18 +8,25 @@ get.summary.stats_obs=function(dat){  #dat must have time.seg assigned; for all 
   names(obs.list)<- id
   
   
-  #calculate # of obs in each grid.cell by time.seg
+  #calculate # of obs in each AC by time.seg
   for (i in 1:length(dat.list)) {
-    ntseg=max(dat.list[[i]]$time.seg)
-    nloc=length(unique(dat$grid.cell))
+    dat.ind=dat.list[[i]]
+    ntseg=max(dat.ind$time.seg)
+    nloc=length(unique(dat.ind$ac))
     res=matrix(0, ntseg, nloc)
     colnames(res)=1:nloc
     
+    #Re-label ACs to be consecutive numbers
+    dat.ind$ac<- as.factor(dat.ind$ac)
+    levels(dat.ind$ac)<- 1:nloc
+    dat.ind$ac<- as.numeric(dat.ind$ac)
+    
     for (j in 1:ntseg){
-      ind=dat.list[[i]] %>% filter(time.seg==j) %>% group_by(grid.cell) %>% count()
-      res[j,ind$grid.cell]=ind$n #takes count of each cluster within given time segment
+      ind=dat.ind %>% filter(time.seg==j) %>% group_by(ac) %>% count()
+      res[j,ind$ac]=ind$n #takes count of each cluster within given time segment
     }
-    id<- rep(unique(dat.list[[i]]$id), ntseg)
+    
+    id<- rep(unique(dat.ind$id), ntseg)
     res=cbind(id, res) %>% data.frame()
     obs.list[[i]]=res
   }
