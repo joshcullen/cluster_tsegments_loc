@@ -5,6 +5,7 @@ library('MCMCpack')
 library(dplyr)
 library(purrr)
 library(tidyr) #for gather function
+library(ggplot2)
 library(ggnewscale) #for multiple fill scales in ggplot2
 library(pals) # for more color palettes
 library(progress) #for progress bar
