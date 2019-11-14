@@ -1,4 +1,11 @@
 gibbs.clust.space=function(dat,ngibbs,nburn,nclustmax) {
+  
+#progress bar
+pb <- progress_bar$new(
+  format = " iteration (:current/:total) [:bar] :percent [Elapsed: :elapsed, Remaining: :eta]",
+  total = ngibbs, clear = FALSE, width= 100)
+
+
 
 n=rowSums(dat)
 nobs=nrow(dat)

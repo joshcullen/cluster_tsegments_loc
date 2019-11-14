@@ -9,6 +9,12 @@ library(ggplot2)
 library(ggnewscale) #for multiple fill scales in ggplot2
 library(pals) # for more color palettes
 library(progress) #for progress bar
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sp)
+library(rgdal)
+
 
 
 sourceCpp('aux1.cpp')
@@ -31,36 +37,30 @@ obs.list=df.to.list(obs) %>% lapply(function(x) {as.matrix(x[,!is.na(colSums(x))
 #### Run Gibbs Sampler by ID ####
 #################################
 
-#priors
-psi=0.01
-gamma1=0.1
-
 #basic settings
 ngibbs = 1000
 nburn=ngibbs/2
 
+#priors
+psi=0.01
+gamma1=0.1
 
 
 
 ## ID 1 ##
 
-#progress bar
-pb <- progress_bar$new(
-  format = " iteration (:current/:total) [:bar] :percent [Elapsed: :elapsed, Remaining: :eta]",
-  total = ngibbs, clear = FALSE, width= 100)
-
-
 dat1.res<- gibbs.clust.space(dat = obs.list$`1`[,-1], ngibbs = ngibbs, nburn = nburn,
-                             nclustmax = 6)
+                             nclustmax = ncol(obs.list$`1`)-1)
 
 plot(dat1.res$loglikel,type='l')
 plot(dat1.res$phi[ngibbs,],type='h')
 plot(dat1.res$z[ngibbs,],type='h')
 
-MAP1<- which(dat1.res$loglikel==max(dat1.res$loglikel))  # iteration 620 of MAP
-# MAP1<- dat1.res$loglikel %>% order(decreasing = T) %>% subset(. > 500) %>% first() #iteration 541
+# MAP1<- which(dat1.res$loglikel==max(dat1.res$loglikel))  # iteration 220 of MAP
+MAP1<- dat1.res$loglikel %>% order(decreasing = T) %>% subset(. > 500) %>% first() #iteration 541
 tbsp.clust1<- dat1.res$z[MAP1,]
-table(tbsp.clust1)  # 6 clusters
+table(tbsp.clust1)
+nclust<- tbsp.clust1$tbsp.clust1 %>% unique() %>% length()
 
 time.seg<- 1:nrow(obs.list$`1`)
 tbsp.clust1<- cbind(tbsp.clust1,time.seg) %>% data.frame()
@@ -101,14 +101,32 @@ ggplot() +
   scale_y_continuous(expand = c(0,0)) +
   scale_x_continuous(expand = c(0,0)) +
   new_scale_fill() +
-  geom_vline(data = rect.lims.new, aes(xintercept = xmin), color = "white", size = 0.35) +
+  geom_vline(data = rect.lims.new, aes(xintercept = xmin), color = viridis(n=9)[7], size = 0.35) +
   geom_rect(data=rect.lims.new, aes(xmin = xmin, xmax = xmax, ymin = max(obs1.long$key) + 0.5,
-                                    ymax = max(obs1.long$key) + 0.75, fill = tbsp.clust1),
+                                    ymax = max(obs1.long$key) + 1.0, fill = tbsp.clust1),
                                     color = NA, size = 1.5) +
-  scale_fill_gradientn("Time Cluster", colours = ocean.amp(6)) +
+  scale_fill_gradientn("Time Cluster", colours = ocean.amp(nclust)) +
   labs(x = "Time Segment", y = "Activity Center") +
   theme_bw() +
   theme(axis.title = element_text(size = 18), axis.text = element_text(size = 16))
+
+
+#Plot geographic map of clusters
+usa <- ne_states(country = "United States of America", returnclass = "sf")
+fl<- usa %>% filter(name == "Florida")
+fl<- st_transform(fl, crs = "+init=epsg:32617") #change projection to UTM 17N
+
+ggplot() +
+  geom_sf(data = fl) +
+  coord_sf(xlim = c(min(dat$utmlong-20000), max(dat$utmlong+20000)),
+           ylim = c(min(dat$utmlat-20000), max(dat$utmlat+20000)), expand = FALSE) +
+  geom_path(data = dat.list$`1`, aes(x = utmlong, y = utmlat), size=0.35) +
+  geom_point(data = dat.list$`1`, aes(utmlong, utmlat, fill=as.numeric(tbsp.clust1)), size=2,
+             pch=21, stroke=0.25) +
+  scale_fill_gradientn("Cluster", colours = ocean.amp(nclust)) +
+  labs(x = "Longitude", y = "Latitude") +
+  theme_bw() +
+  facet_wrap(~tbsp.clust1)
 
 
 
