@@ -1,5 +1,7 @@
 gibbs.clust.space=function(dat,ngibbs,nburn,nclustmax) {
-  
+
+set.seed(1)  
+
 #progress bar
 pb <- progress_bar$new(
   format = " iteration (:current/:total) [:bar] :percent [Elapsed: :elapsed, Remaining: :eta]",

@@ -47,3 +47,13 @@ df.to.list=function(dat) {  #only for id as col in dat
   dat.list
 }
 #---------------------------------------------
+find.MAP=function(dat, nburn) {  #select MAP value that is beyond burn-in phase
+  if (length(max(dat$loglikel)) > 1) {
+    stop("> 1 MAP value; inspect likelihood vector")
+  } else if (which(dat$loglikel==max(dat$loglikel)) < nburn) {
+  MAP<- dat$loglikel %>% order(decreasing = T) %>% subset(. > nburn) %>% first()
+  } else {
+  MAP<- which(dat$loglikel==max(dat$loglikel))
+  }
+  return(MAP)
+}
